@@ -1,11 +1,11 @@
 <?php
-$connect = new mysqli("184.168.99.250", "neerajmalkani", "secure@MySQL", "cricketdb"); //Connect PHP to MySQL Database
+$connect = new mysqli("184.168.96.211", "neerajmalkani", "secure@MySQL", "cricketdb"); //Connect PHP to MySQL Database
 date_default_timezone_set('asia/kolkata');
 $date = new DateTime();
-$date->modify('+4 day');
+$date->modify('+20 day');
 $date1 = new DateTime();
-$date1->modify('-4 day');
-$service_url = "https://cricket.sportmonks.com/api/v2.0/fixtures?filter[starts_between]=" . $date1->format('Y-m-d') . "," . $date->format('Y-m-d') . "&include=runs&sort=id&api_token=9zC8IKVOFPGJyGkyrGk9n1eEpSEeDIyjWqprJYO9vMZ5Yyo9HSgfmWc0y7U7";
+$date1->modify('-20 day');
+$service_url = "https://cricket.sportmonks.com/api/v2.0/fixtures?filter[starts_between]=" . $date1->format('Y-m-d') . "," . $date->format('Y-m-d') . "&include=runs&api_token=9zC8IKVOFPGJyGkyrGk9n1eEpSEeDIyjWqprJYO9vMZ5Yyo9HSgfmWc0y7U7";
 $curl = curl_init($service_url);
 curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
 $fixturesList = curl_exec($curl);
@@ -14,12 +14,16 @@ $fixturesList = json_decode($fixturesList);
 $array = (array) $fixturesList->data;
 $query = "";
 foreach ($array as $row) {
+  if (!is_null($row->localteam_dl_data)) {
   $ls = (is_null($row->localteam_dl_data->score) ? "NULL" : $row->localteam_dl_data->score);
-  $lo = (is_null($row->localteam_dl_data->overs) ? "NULL" : $row->localteam_dl_data->overs);
+  $lo = "'" . $row->localteam_dl_data->overs . "'";
   $lw = (is_null($row->localteam_dl_data->wickets_out) ? "NULL" : $row->localteam_dl_data->wickets_out);
+  }
+  if (!is_null($row->visitorteam_dl_data)) {
   $vs = (is_null($row->visitorteam_dl_data->score) ? "NULL" : $row->visitorteam_dl_data->score);
-  $vo = (is_null($row->visitorteam_dl_data->overs) ? "NULL" : $row->visitorteam_dl_data->overs);
+  $vo = "'" . $row->visitorteam_dl_data->overs . "'";
   $vw = (is_null($row->visitorteam_dl_data->wickets_out) ? "NULL" : $row->visitorteam_dl_data->wickets_out);
+  }
   $ro = "'" . $row->round . "'";
   $sa = "'" . $row->starting_at . "'";
   $ty = "'" . $row->type . "'";
@@ -45,7 +49,7 @@ foreach ($array as $row) {
   $ri = (is_null($row->referee_id) ? "NULL" : $row->referee_id);
   $momi = (is_null($row->man_of_match_id) ? "NULL" : $row->man_of_match_id);
   $mosi = (is_null($row->man_of_series_id) ? "NULL" : $row->man_of_series_id);
-  $top = (is_null($row->total_overs_played) ? "NULL" : $row->total_overs_played);
+  $top = "'" . $row->total_overs_played . "'";
   $rpo = (is_null($row->rpc_overs) ? "NULL" : $row->rpc_overs);
   $rpt = (is_null($row->rpc_target) ? "NULL" : $row->rpc_target);
 
@@ -165,7 +169,7 @@ foreach ($array as $row) {
     $runin = (is_null($key->inning) ? "NULL" : $key->inning);
     $runsc = (is_null($key->score) ? "NULL" : $key->score);
     $runwi = (is_null($key->wickets) ? "NULL" : $key->wickets);
-    $runov = (is_null($key->overs) ? "NULL" : $key->overs);
+    $runov = "'" . $key->overs . "'";
     $runpp1 = "'" . $key->pp1 . "'";
     $runpp2 = "'" . $key->pp2 . "'";
     $runpp3 = "'" . $key->pp3 . "'";
@@ -210,10 +214,8 @@ foreach ($array as $row) {
   }
 }
 
-//echo $query;
-
 if ($connect->multi_query($query) === TRUE) {
-  echo "New records created successfully";
+  echo "New records created successfully from " . $date->format('Y-m-d H:i:s') . " to " . $date1->format('Y-m-d H:i:s');
 } else {
   echo "Error: " . $query . "<br>" . $connect->error;
 }
